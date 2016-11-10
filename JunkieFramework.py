@@ -8,7 +8,7 @@ class Settings(object):
         self.email_smtp_port = email_smtp_port
 
 
-class JunkieFramework(object):
+class Core(object):
     class _ContextGeneral:
         def __init__(self, context, value):
             self.context = context
@@ -20,11 +20,17 @@ class JunkieFramework(object):
     class _ContextPeriod:
         class _Part:
             def __init__(self, key, item=0):
-                self.key = key
+                self.key = str(key)
                 self.item = item
+                self.items = []
+                import re
+                self.items.append(re.search('\D+', self.key).group(0))
+                self.items.append(re.search('\d+', self.key).group(0))
 
             def __str__(self):
-                return str(self.key).split("-")[self.item].upper()
+                import re
+                items = []
+                return self.items[self.item].upper()
 
         def __init__(self, context):
             self.context = context
@@ -64,7 +70,7 @@ class JunkieFramework(object):
             if len(recipients) == 0:
                 recipients = sender
                 recipients = [recipients]
-                prefix = "Invalid Recipients - "
+                subject = "Invalid Recipients - " + subject
             else:
                 # Check if its a comma delimited string already
                 if "," in recipients:
@@ -76,7 +82,7 @@ class JunkieFramework(object):
             message = MIMEMultipart()
             message["From"] = sender
             message["To"] = ', '.join(recipients)
-            message["Subject"] = prefix + subject
+            message["Subject"] = subject
             for item in attachment:
                 message.attach(item)
             message.attach(MIMEText(body))
