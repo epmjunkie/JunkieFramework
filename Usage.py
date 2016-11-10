@@ -1,4 +1,4 @@
-import sys, os
+import sys
 sys.path.append('%(script_path)s\custom' % {'script_path': fdmContext["SCRIPTSDIR"]})
 
 import JunkieFramework as jframe
