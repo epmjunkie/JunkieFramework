@@ -2,9 +2,13 @@ class Settings(object):
     def __init__(self,
                  email_sender="hypadmin@epmjunkie.com",
                  email_smtp_host="localhost",
-                 email_smtp_port=25):
+                 email_smtp_port=25,
+                 email_smtp_password=None,
+                 email_smtp_tls=False):
         self.email_sender = email_sender
+        self.email_smtp_password = email_smtp_password
         self.email_smtp_host = email_smtp_host
+        self.email_smtp_tls = email_smtp_tls
         self.email_smtp_port = email_smtp_port
 
 
@@ -45,6 +49,8 @@ class Core(object):
             self.sender = settings.email_sender
             self.host = settings.email_smtp_host
             self.port = settings.email_smtp_port
+            self.password = settings.email_smtp_password
+            self.tls = settings.email_smtp_tls
 
         # Handles sending email with optional attachments
         '''
@@ -55,7 +61,7 @@ class Core(object):
         send(recipients=recipients, subject=subject, body=body)
         '''
         def send(self, recipients, body, subject="Test Message", attachment=[], sender=None,
-                     host=None, port=None):
+                     host=None, port=None, password=None, tls=None):
             import smtplib
             from email.mime.text import MIMEText
             from email.mime.multipart import MIMEMultipart
@@ -65,6 +71,11 @@ class Core(object):
                 host = self.host
             if not port:
                 port = self.port
+            if not password:
+                password = self.password
+            if tls is None:
+                tls = self.tls
+
 
             # Catch missing emails
             if len(recipients) == 0:
@@ -79,6 +90,12 @@ class Core(object):
                     recipients = [recipients]
 
             client = smtplib.SMTP(host, port)
+            if tls:
+                client.ehlo()
+                client.starttls()
+                client.ehlo
+            if password:
+                client.login(sender, password)
             message = MIMEMultipart()
             message["From"] = sender
             message["To"] = ', '.join(recipients)
@@ -88,6 +105,7 @@ class Core(object):
             message.attach(MIMEText(body))
             client.sendmail(sender, recipients, message.as_string())
             client.quit()
+            client.close()
 
         # Handles creating attachment for emailing
         def create_attachment(self, path, name):
@@ -97,38 +115,30 @@ class Core(object):
             from email.mime.image import MIMEImage
             from email.mime.text import MIMEText
             from email import encoders
-            try:
-                self.api.logInfo("Create Attachment: " + name + " [" + path + "]")
+            if len(name) > 0 and len(path) > 0:
+                contentType = mimetypes.guess_type(path)[0]
 
-                if len(name) > 0 and len(path) > 0:
-                    contentType = mimetypes.guess_type(path)[0]
+                if contentType is None:
+                    contentType = "text/plain"
 
-                    self.api.logInfo("Content Type: " + str(contentType))
+                maintype, subtype = contentType.split("/", 1)
 
-                    if contentType is None:
-                        contentType = "text/plain"
+                f = open(path)
+                if maintype == "text":
+                    attachment = MIMEText(f.read(), _subtype=subtype)
+                elif maintype == "image":
+                    attachment = MIMEImage(f.read(), _subtype=subtype)
+                elif maintype == "audio":
+                    attachment = MIMEAudio(f.read(), _subtype=subtype)
+                else:
+                    attachment = MIMEBase(_maintype=maintype, _subtype=subtype)
+                    attachment.set_payload(f.read())
+                encoders.encode_base64(attachment)
+                f.close()
+                attachment.add_header("Content-Disposition", "attachment", filename=name)
 
-                    maintype, subtype = contentType.split("/", 1)
-
-                    f = open(path)
-                    if maintype == "text":
-                        attachment = MIMEText(f.read(), _subtype=subtype)
-                    elif maintype == "image":
-                        attachment = MIMEImage(f.read(), _subtype=subtype)
-                    elif maintype == "audio":
-                        attachment = MIMEAudio(f.read(), _subtype=subtype)
-                    else:
-                        attachment = MIMEBase(_maintype=maintype, _subtype=subtype)
-                        attachment.set_payload(f.read())
-                    encoders.encode_base64(attachment)
-                    f.close()
-                    attachment.add_header("Content-Disposition", "attachment", filename=name)
-
-                    return attachment
-                return None
-            except:
-                self.api.logInfo("Error occurred creating attachment.")
-                return None
+                return attachment
+            return None
 
     def __init__(self, context, api, settings=Settings()):
         self.context = context
