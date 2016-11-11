@@ -15,6 +15,6 @@ def test():
     fdmAPI.logDebug(jf.Period.Month)
     fdmAPI.logDebug(jf.Period.Year)
     attachments = []
-    attachments.append(jf.Email.create_attachment(path=r"c:\temp\test1.zip"))
-    attachments.append(jf.Email.create_attachment(path=r"c:\temp\test2.zip"))
-    jf.Email.send(recipients="test@epmjunkie.com", subject="testing", attachments=attachments, body="Test Email")
+    attachments.append(jf.Email.create_attachment(path=r"c:\temp\test1.zip", name="test1.zip"))
+    attachments.append(jf.Email.create_attachment(path=r"c:\temp\test2.zip", name="test2.zip"))
+    jf.Email.send(recipients="test@epmjunkie.com", subject="testing", attachment=attachments, body="Test Email")
