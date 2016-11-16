@@ -19,7 +19,7 @@ class Core(object):
             self.value = value
 
         def __str__(self):
-            return self.context[self.value]
+            return str(self.context[self.value])
 
     class _ContextPeriod:
         class _Part:
