@@ -26,10 +26,11 @@ class Core(object):
             def __init__(self, key, item=0):
                 self.key = str(key)
                 self.item = item
-                self.items = []
-                import re
-                self.items.append(re.search('\D+', self.key).group(0))
-                self.items.append(re.search('\d+', self.key).group(0))
+                self.items = [None, None]
+                if self.key:
+                    import re
+                    self.items[0] = re.search('\D+', self.key).group(0)
+                    self.items[1] = re.search('\d+', self.key).group(0)
 
             def __str__(self):
                 import re
@@ -42,7 +43,9 @@ class Core(object):
             self.Year = self._Part(self, 1)
 
         def __str__(self):
-            return self.context["PERIODNAME"]
+            if "PERIODNAME" in self.context:
+                return self.context["PERIODNAME"]
+            return ""
 
     class _Email:
         def __init__(self, settings):
@@ -179,3 +182,4 @@ class Core(object):
         self.TargetAppID = self._ContextGeneral(context=context, value="APPID")
         self.ValidationStatus = self._ContextGeneral(context=context, value="VALSTATUS")
         self.Email = self._Email(settings=settings)
+
