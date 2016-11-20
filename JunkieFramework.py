@@ -13,6 +13,31 @@ class Settings(object):
 
 
 class Core(object):
+    class _Log:
+        def __init__(self, context, api, seperator=":\t", delimiter="\n"):
+            self._context = context
+            self.api = api
+            self.seperator = seperator
+            self.delim = delimiter
+
+        def _parse(self, obj, seperator=None, delimiter=None):
+            if not delimiter:
+                delimiter = self.delim
+            if not seperator:
+                seperator = self.seperator
+            return delimiter.join(["%s%s%s" % (key, seperator, value) for (key, value) in sorted(obj.items())])
+
+        def object(self, obj, prefix="Object: ", seperator=None, delimiter=None):
+            if obj:
+                return "%(prefix)s%(list)s" % {"prefix": prefix, "list": self._parse(obj, seperator, delimiter)}
+            return "%sEmpty" % prefix
+
+        def context(self):
+            if self.context:
+                self.api.logDebug(self.object(self._context, prefix="FDM Context:\n"))
+            else:
+                self.api.logWarn(self.object(self._context, prefix="FDM Context: "))
+
     class _Email:
         def __init__(self, settings):
             self.sender = settings.email_sender
@@ -114,6 +139,7 @@ class Core(object):
         self._api = api
         self.settings = settings
         self.Email = self._Email(settings=settings)
+        self.log = self._Log(context, api)
 
     def getContextValue(self, name):
         return str(self._context[name])
