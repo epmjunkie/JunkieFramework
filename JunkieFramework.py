@@ -147,132 +147,132 @@ class Core(object):
 
     @property
     def application_id(self):
-        return self.getContextValue("APPID")
+        return self.get_context_value("APPID")
 
     @property
     def batch_script_directory(self):
-        return self.getContextValue("BATCHSCRIPTDIR")
+        return self.get_context_value("BATCHSCRIPTDIR")
 
     @property
     def category(self):
-        return self.getContextValue("CATNAME")
+        return self.get_context_value("CATNAME")
 
     @property
     def category_key(self):
-        return self.getContextValue("CATKEY")
+        return self.get_context_value("CATKEY")
 
     @property
     def check_status(self):
-        return self.getContextValue("CHKSTATUS")
+        return self.get_context_value("CHKSTATUS")
 
     @property
     def epm_home(self):
-        return self.getContextValue("EPMORACLEHOME")
+        return self.get_context_value("EPMORACLEHOME")
 
     @property
     def epm_instance_home(self):
-        return self.getContextValue("EPMORACLEINSTANCEHOME")
+        return self.get_context_value("EPMORACLEINSTANCEHOME")
 
     @property
     def export_flag(self):
-        return self.getContextValue("EXPORTFLAG")
+        return self.get_context_value("EXPORTFLAG")
 
     @property
     def export_mode(self):
-        return self.getContextValue("EXPORTMODE")
+        return self.get_context_value("EXPORTMODE")
 
     @property
     def export_status(self):
-        return self.getContextValue("EXPSTATUS")
+        return self.get_context_value("EXPSTATUS")
 
     @property
     def file_directory(self):
-        return self.getContextValue("FILEDIR")
+        return self.get_context_value("FILEDIR")
 
     @property
     def file_name(self):
-        return self.getContextValue("FILENAME")
+        return self.get_context_value("FILENAME")
 
     @property
     def import_flag(self):
-        return self.getContextValue("IMPORTFLAG")
+        return self.get_context_value("IMPORTFLAG")
 
     @property
     def import_format(self):
-        return self.getContextValue("IMPORTFORMAT")
+        return self.get_context_value("IMPORTFORMAT")
 
     @property
     def import_status(self):
-        return self.getContextValue("IMPSTATUS")
+        return self.get_context_value("IMPSTATUS")
 
     @property
     def inbox_directory(self):
-        return self.getContextValue("INBOXDIR")
+        return self.get_context_value("INBOXDIR")
 
     @property
     def load_id(self):
-        return self.getContextValue("LOADID")
+        return self.get_context_value("LOADID")
 
     @property
     def location_key(self):
-        return self.getContextValue("LOCKEY")
+        return self.get_context_value("LOCKEY")
 
     @property
     def location(self):
-        return self.getContextValue("LOCNAME")
+        return self.get_context_value("LOCNAME")
 
     @property
     def multi_period_load(self):
-        return self.getContextValue("MULTIPERIODLOAD")
+        return self.get_context_value("MULTIPERIODLOAD")
 
     @property
     def outbox_directory(self):
-        return self.getContextValue("OUTBOXDIR")
+        return self.get_context_value("OUTBOXDIR")
 
     @property
     def period(self):
-        return self.getContextValue("PERIODNAME")
+        return self.get_context_value("PERIODNAME")
 
     @property
     def period_key(self):
-        return self.getContextValue("PERIODKEY")
+        return self.get_context_value("PERIODKEY")
 
     @property
     def process_status(self):
-        return self.getContextValue("PROCESSSTATUS")
+        return self.get_context_value("PROCESSSTATUS")
 
     @property
     def rule(self):
-        return self.getContextValue("RULENAME")
+        return self.get_context_value("RULENAME")
 
     @property
     def rule_id(self):
-        return self.getContextValue("RULEID")
+        return self.get_context_value("RULEID")
 
     @property
     def script_directory(self):
-        return self.getContextValue("SCRIPTSDIR")
+        return self.get_context_value("SCRIPTSDIR")
 
     @property
     def source_name(self):
-        return self.getContextValue("SOURCENAME")
+        return self.get_context_value("SOURCENAME")
 
     @property
     def source_type(self):
-        return self.getContextValue("SOURCETYPE")
+        return self.get_context_value("SOURCETYPE")
 
     @property
     def target_app(self):
-        return self.getContextValue("TARGETAPPNAME")
+        return self.get_context_value("TARGETAPPNAME")
 
     @property
     def target_app_db(self):
-        return self.getContextValue("TARGETAPPDB")
+        return self.get_context_value("TARGETAPPDB")
 
     @property
     def target_app_id(self):
-        return self.getContextValue("APPID")
+        return self.get_context_value("APPID")
 
     @property
     def validation_status(self):
-        return self.getContextValue("VALSTATUS")
+        return self.get_context_value("VALSTATUS")
