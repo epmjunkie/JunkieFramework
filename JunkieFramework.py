@@ -103,7 +103,11 @@ class Core(object):
             client.close()
 
         # Handles creating attachment for emailing
-        def create_attachment(self, path, name):
+        @staticmethod
+        def create_attachment(path, name=None):
+            from os import path as ospath
+            if not name:
+                name = ospath.basename(path)
             import mimetypes
             from email.mime.audio import MIMEAudio
             from email.mime.base import MIMEBase
@@ -111,12 +115,12 @@ class Core(object):
             from email.mime.text import MIMEText
             from email import encoders
             if len(name) > 0 and len(path) > 0:
-                contentType = mimetypes.guess_type(path)[0]
+                content_type = mimetypes.guess_type(path)[0]
 
-                if contentType is None:
-                    contentType = "text/plain"
+                if content_type is None:
+                    content_type = "text/plain"
 
-                maintype, subtype = contentType.split("/", 1)
+                maintype, subtype = content_type.split("/", 1)
 
                 f = open(path)
                 if maintype == "text":
