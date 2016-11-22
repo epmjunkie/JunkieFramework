@@ -14,23 +14,22 @@ class Settings(object):
 
 class Core(object):
     class _Log:
-        def __init__(self, context, api, seperator=":\t", delimiter="\n"):
+        def __init__(self, context, api, separator=":\t", delimiter="\n"):
             self._context = context
             self.api = api
-            self.seperator = seperator
+            self.separator = separator
             self.delim = delimiter
 
-
-        def _parse(self, obj, seperator=None, delimiter=None):
+        def _parse(self, obj, separator=None, delimiter=None):
             if not delimiter:
                 delimiter = self.delim
-            if not seperator:
-                seperator = self.seperator
-            return delimiter.join(["%s%s%s" % (key, seperator, value) for (key, value) in sorted(obj.items())])
+            if not separator:
+                separator = self.separator
+            return delimiter.join(["%s%s%s" % (key, separator, value) for (key, value) in sorted(obj.items())])
 
-        def object(self, obj, prefix="Object: ", seperator=None, delimiter=None):
+        def object(self, obj, prefix="Object: ", separator=None, delimiter=None):
             if obj:
-                return "%(prefix)s%(list)s" % {"prefix": prefix, "list": self._parse(obj, seperator, delimiter)}
+                return "%(prefix)s%(list)s" % {"prefix": prefix, "list": self._parse(obj, separator, delimiter)}
             return "%sEmpty" % prefix
 
         def context(self):
@@ -55,8 +54,8 @@ class Core(object):
         recipients = can be a array ["hypadmin@epmjunkie.com","testing@epmjunkie.com"] or comma delimited list
         send(recipients=recipients, subject=subject, body=body)
         '''
-        def send(self, recipients, body, subject="Test Message", attachment=[], sender=None,
-                     host=None, port=None, password=None, tls=None):
+        def send(self, recipients, body, subject="Test Message", attachment=[], sender=None, host=None, port=None,
+                 password=None, tls=None):
             import smtplib
             from email.mime.text import MIMEText
             from email.mime.multipart import MIMEMultipart
@@ -71,15 +70,12 @@ class Core(object):
             if tls is None:
                 tls = self.tls
 
-
-            # Catch missing emails
-            if len(recipients) == 0:
+            if len(recipients) == 0:    # Catch missing emails
                 recipients = sender
                 recipients = [recipients]
                 subject = "Invalid Recipients - " + subject
             else:
-                # Check if its a comma delimited string already
-                if "," in recipients:
+                if "," in recipients:    # Check if its a comma delimited string already
                     recipients = [x.strip() for x in recipients.split(",")]
                 else:
                     recipients = [recipients]
