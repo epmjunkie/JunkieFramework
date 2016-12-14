@@ -25,7 +25,7 @@ class Core(object):
                 delimiter = self.delim
             if not separator:
                 separator = self.separator
-            return delimiter.join(["%s%s%s" % (key, separator, value) for (key, value) in sorted(obj.items())])
+            return delimiter.join(["%s%s%s" % (key, separator, obj[key]) for key in sorted(obj.keys())])
 
         def object(self, obj, prefix="Object: ", separator=None, delimiter=None):
             if obj:
