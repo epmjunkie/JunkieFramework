@@ -25,7 +25,7 @@ class Core(object):
                 delimiter = self.delim
             if not separator:
                 separator = self.separator
-            return delimiter.join(["%s%s%s" % (key, separator, obj[key]) for key in sorted(obj.keys())])
+            return delimiter.join(["%s%s%s" % (key, separator, obj[key]) for key in sorted(obj.keySet())])
 
         def object(self, obj, prefix="Object: ", separator=None, delimiter=None):
             if obj:
@@ -69,6 +69,8 @@ class Core(object):
                 password = self.password
             if tls is None:
                 tls = self.tls
+            if attachment is None:
+                attachment = []
 
             if len(recipients) == 0:    # Catch missing emails
                 recipients = sender
