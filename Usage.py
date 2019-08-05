@@ -1,12 +1,15 @@
-import sys
-sys.path.append('%(script_path)s\custom' % {'script_path': fdmContext["SCRIPTSDIR"]})
+def append_path(value):  # don't append if its already there
+    import sys
+    if value not in sys.path:
+        sys.path.append(value)
 
-import JunkieFramework as jframe
-reload(jframe)
+append_path('%(script_path)s\custom' % {'script_path': fdmContext["SCRIPTSDIR"]})
+import JunkieFramework
+reload(JunkieFramework)
 
 #Usage Example
-settings = jframe.Settings(email_sender='fdmee@epmjunkie.com', email_smtp_host="smtp.epmjunkie.com")
-jf = jframe.Core(context=fdmContext, api=fdmAPI, settings=settings)
+settings = JunkieFramework.Settings(email_sender='fdmee@epmjunkie.com', email_smtp_host="smtp.epmjunkie.com")
+jf = JunkieFramework.Core(context=fdmContext, api=fdmAPI, settings=settings)
 
 
 def test():
