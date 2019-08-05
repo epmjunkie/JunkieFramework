@@ -4,12 +4,20 @@ class Settings(object):
                  email_smtp_host="localhost",
                  email_smtp_port=25,
                  email_smtp_password=None,
-                 email_smtp_tls=False):
+                 email_smtp_tls=False,
+                 essbase_server=None,
+                 essbase_application=None,
+                 essbase_database=None,
+                 essbase_log=False):
         self.email_sender = email_sender
         self.email_smtp_password = email_smtp_password
         self.email_smtp_host = email_smtp_host
         self.email_smtp_tls = email_smtp_tls
         self.email_smtp_port = email_smtp_port
+        self.essbase_server = essbase_server
+        self.essbase_application = essbase_application
+        self.essbase_database = essbase_database
+        self.essbase_log = essbase_log
 
 
 class Core(object):
@@ -72,12 +80,12 @@ class Core(object):
             if attachment is None:
                 attachment = []
 
-            if len(recipients) == 0:    # Catch missing emails
+            if len(recipients) == 0:  # Catch missing emails
                 recipients = sender
                 recipients = [recipients]
                 subject = "Invalid Recipients - " + subject
             else:
-                if "," in recipients:    # Check if its a comma delimited string already
+                if "," in recipients:  # Check if its a comma delimited string already
                     recipients = [x.strip() for x in recipients.split(",")]
                 else:
                     recipients = [recipients]
@@ -137,12 +145,90 @@ class Core(object):
                 return attachment
             return None
 
+    class _Essbase:
+        def __init__(self, framework, settings, username=None, password=None, server=None, application=None,
+                     database=None,
+                     sso=True, log=False):
+            self.username = username
+            self.password = password
+            self.server = server
+            self.application = application
+            self.database = database
+            self.sso = sso
+            self.framework = framework
+            self.log = log
+            if settings.essbase_server is not None and self.server is None:
+                self.server = settings.essbase_server
+            if settings.essbase_application is not None and self.application is None:
+                self.application = settings.essbase_application
+            if settings.essbase_database is not None and self.database is None:
+                self.database = settings.essbase_database
+            if self.username is None:
+                self.username = self.framework.username
+            if self.log is None:
+                self.log = settings.essbase_log
+
+            if self.application is None:
+                if self.log:
+                    self.framework._api.logDebug("Get App Name: %s" % (self.framework.target_app))
+                self.application = self.framework.target_app
+            if self.database is None:
+                if self.log:
+                    self.framework._api.logDebug("Get DB Name: %s" % (self.framework.target_app_db))
+                self.database = self.framework.target_app_db
+            self.essbase = None
+            self.domain = None
+            self.connection = None
+
+        def connect(self):
+            from com.essbase.api.session import IEssbase
+            from com.hyperion.aif.util import RegistryUtil as aifUtil
+            self.essbase = IEssbase.Home.create(IEssbase.JAPI_VERSION)
+            if self.server is None:
+                if self.log:
+                    self.framework._api.logDebug("Get Server for: %s using user %s" % (self.application, self.username))
+                self.server = aifUtil.getEssbaseServerName(self.application, self.username)
+            if self.sso:
+                if self.log:
+                    self.framework._api.logDebug("Get SSO for: %s" % (self.username))
+                token = aifUtil.getSSOTokenForUser(self.username)
+                if self.log:
+                    self.framework._api.logDebug("Sign on using token: %s" % (token))
+                self.domain = self.essbase.signOn(self.username, token, True, None, "Embedded")
+            else:
+                if self.log:
+                    self.framework._api.logDebug("Sign on using user/pass: %s/%s" % (self.username, self.password))
+                self.domain = self.essbase.signOn(self.username, self.password, False, None, "Embedded")
+            self.connection = self.domain.getOlapServer(self.server)
+            self.connection.connect()
+
+        def get_cube(self, application=None, database=None):
+            if application is None:
+                application = self.application
+            if database is None:
+                database = self.database
+            if self.connection:
+                if self.log:
+                    self.framework._api.logDebug("Get Cube: %s.%s" % (application, database))
+                return self.connection.getApplication(application).getCube(database)
+            raise ("Connection unavilable: Unable to access cube.")
+
+        def get_variable(self, variable):
+            if self.connection:
+                return self.connection.getSubstitutionVariableValue(variable)
+            raise ("Connection unavilable: Unable to retreive variable.")
+
+        def sign_off(self):
+            if self.essbase:
+                self.essbase.signOff()
+
     def __init__(self, context, api, settings=Settings()):
         self._context = context
         self._api = api
         self.settings = settings
         self.email = self._Email(settings=settings)
         self.log = self._Log(context, api)
+        self.essbase = self._Essbase(self, settings=settings)
 
     def get_context_value(self, name):
         return str(self._context[name])
