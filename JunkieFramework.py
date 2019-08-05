@@ -148,6 +148,10 @@ class Core(object):
         return str(self._context[name])
 
     @property
+    def application_name(self):
+        return self.get_context_value("APPNAME")
+
+    @property
     def application_id(self):
         return self.get_context_value("APPID")
 
