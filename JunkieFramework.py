@@ -272,8 +272,8 @@ class Core(object):
         return self.get_context_value("TARGETAPPDB")
 
     @property
-    def target_app_id(self):
-        return self.get_context_value("APPID")
+    def username(self):
+        return self.get_context_value("USERNAME")
 
     @property
     def validation_status(self):
