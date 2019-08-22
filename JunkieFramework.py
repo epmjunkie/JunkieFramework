@@ -253,6 +253,7 @@ class Core(object):
         self.email = self._Email(settings=settings)
         self.log = self._Log(context, api)
         self.essbase = self._Essbase(self, settings=settings)
+        self.file = self._File(self, settings=settings)
 
     def get_context_value(self, name):
         return str(self._context[name])
