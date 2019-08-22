@@ -255,6 +255,17 @@ class Core(object):
         self.essbase = self._Essbase(self, settings=settings)
         self.file = self._File(self, settings=settings)
 
+    def append_path(self, value):  # don't append if its already there
+        import sys
+        import os
+        if os.path.exists(value):
+            if value not in sys.path:
+                self._api.logInfo("Adding \"%s\" to PATH" % (value))
+                sys.path.append(value)
+        else:
+            self._api.logInfo("\"%s\" does not exist" % (value))
+        self._api.logInfo(";".join(sys.path))
+
     def get_context_value(self, name):
         return str(self._context[name])
 
