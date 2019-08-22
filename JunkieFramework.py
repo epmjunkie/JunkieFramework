@@ -145,6 +145,30 @@ class Core(object):
                 return attachment
             return None
 
+    class _File:
+        class File(object):
+            def __init__(self, username=None, password=None, path=None):
+                self.username = username
+                self.password = password
+                self.path = path
+
+        def __init__(self, framework, settings=None):
+            self.framework = framework
+
+        def get_info(self, logical_schema):
+            import com.sunopsis.dwg.DwgObject as DwgObject
+            sql_query = """SELECT c.USER_NAME, c.PASS, sp.SCHEMA_NAME
+                           FROM SNP_CONNECT c
+                             INNER JOIN SNP_PSCHEMA SP on c.I_CONNECT = SP.I_CONNECT
+                             INNER JOIN SNP_PSCHEMA_CONT SPC on SP.I_PSCHEMA = SPC.I_PSCHEMA
+                             INNER JOIN SNP_LSCHEMA SL on SPC.I_LSCHEMA = SL.I_LSCHEMA and SL.LSCHEMA_NAME = ?
+                             INNER JOIN SNP_CONTEXT CX on SPC.I_CONTEXT = CX.I_CONTEXT and CX.DEF_CONT = 1
+                             LEFT JOIN SNP_MTXT t on c.I_TXT_JAVA_URL = t.I_TXT"""
+            result_set = self.framework._api.executeQuery(sql_query, [logical_schema])
+            result_set.next()
+            return self.File(result_set.getString('USER_NAME'), DwgObject.snpsDecypher(result_set.getString('PASS')),
+                             result_set.getString('SCHEMA_NAME'))
+
     class _Essbase:
         def __init__(self, framework, settings, username=None, password=None, server=None, application=None,
                      database=None,
