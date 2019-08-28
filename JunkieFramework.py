@@ -2,7 +2,7 @@ class Settings(object):
     def __init__(self,
                  email_sender="hypadmin@epmjunkie.com",
                  email_smtp_host="localhost",
-                 email_smtp_port=25,
+                 email_smtp_port=None,
                  email_smtp_password=None,
                  email_smtp_tls=False,
                  essbase_server=None,
@@ -13,7 +13,12 @@ class Settings(object):
         self.email_smtp_password = email_smtp_password
         self.email_smtp_host = email_smtp_host
         self.email_smtp_tls = email_smtp_tls
-        self.email_smtp_port = email_smtp_port
+        if email_smtp_port:
+            self.email_smtp_port = email_smtp_port
+        elif email_smtp_tls:
+            self.email_smtp_port = 465
+        else:
+            self.email_smtp_port = 25
         self.essbase_server = essbase_server
         self.essbase_application = essbase_application
         self.essbase_database = essbase_database
@@ -87,7 +92,7 @@ class Core(object):
             else:
                 if "," in recipients:  # Check if its a comma delimited string already
                     recipients = [x.strip() for x in recipients.split(",")]
-                else:
+                elif not isinstance(recipients, list):  # if its not a list make it one
                     recipients = [recipients]
 
             client = smtplib.SMTP(host, port)
