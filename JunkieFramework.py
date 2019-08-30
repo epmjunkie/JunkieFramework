@@ -190,6 +190,7 @@ class Core(object):
 
         def __init__(self, framework, settings):
             self.framework = framework
+            self.connections = []
 
         def get_connection(self, logical_schema):
             import com.sunopsis.dwg.DwgObject as DwgObject
@@ -202,10 +203,12 @@ class Core(object):
                              LEFT JOIN SNP_MTXT t on c.I_TXT_JAVA_URL = t.I_TXT"""
             result_set = self.framework._api.executeQuery(sql_query, [logical_schema])
             result_set.next()
-            return self.SQL(username=result_set.getString('USER_NAME'),
-                            password=DwgObject.snpsDecypher(result_set.getString('PASS')),
-                            server=result_set.getString('DSERV_NAME'),
-                            jdbc=result_set.getString("JDBC")).connect()
+            connection = self.SQL(username=result_set.getString('USER_NAME'),
+                                  password=DwgObject.snpsDecypher(result_set.getString('PASS')),
+                                  server=result_set.getString('DSERV_NAME'),
+                                  jdbc=result_set.getString("JDBC")).connect()
+            self.connections.append(connection)
+            return connection
 
     class _Essbase:
         def __init__(self, framework, settings, username=None, password=None, server=None, application=None,
@@ -291,7 +294,20 @@ class Core(object):
         self.email = self._Email(settings=settings)
         self.log = self._Log(context, api)
         self.essbase = self._Essbase(self, settings=settings)
+        self.sql = self._SQL(self, settings=settings)
         self.file = self._File(self, settings=settings)
+    def cleanup(self):
+        del self.essbase
+        del self.sql
+        del self.file
+        del self.email
+        del self.log
+        try:
+            import gc
+            self._api.logInfo("Calling Garbage Collection")
+            gc.collect()
+        except ex:
+            self._api.logInfo("Error Calling Garbage Collection: " + ex)
 
     def append_path(self, value):  # don't append if its already there
         import sys
