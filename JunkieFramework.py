@@ -67,6 +67,7 @@ class Core(object):
         recipients = can be a array ["hypadmin@epmjunkie.com","testing@epmjunkie.com"] or comma delimited list
         send(recipients=recipients, subject=subject, body=body)
         '''
+
         def send(self, recipients, body, subject="Test Message", attachment=[], sender=None, host=None, port=None,
                  password=None, tls=None):
             import smtplib
@@ -245,6 +246,23 @@ class Core(object):
             self.domain = None
             self.connection = None
 
+        def get_info(self, logical_schema):
+            import com.sunopsis.dwg.DwgObject as DwgObject
+            sql_query = """SELECT c.USER_NAME, c.PASS, c.DSERV_NAME, SP.SCHEMA_NAME as APP, sp.CATALOG_NAME as DB
+                           FROM SNP_CONNECT c
+                             INNER JOIN SNP_PSCHEMA SP on c.I_CONNECT = SP.I_CONNECT
+                             INNER JOIN SNP_PSCHEMA_CONT SPC on SP.I_PSCHEMA = SPC.I_PSCHEMA
+                             INNER JOIN SNP_LSCHEMA SL on SPC.I_LSCHEMA = SL.I_LSCHEMA and SL.LSCHEMA_NAME = ?
+                             INNER JOIN SNP_CONTEXT CX on SPC.I_CONTEXT = CX.I_CONTEXT and CX.DEF_CONT = 1"""
+            result_set = self.framework._api.executeQuery(sql_query, [logical_schema])
+            result_set.next()
+            self.username = result_set.getString('USER_NAME')
+            self.password = DwgObject.snpsDecypher(result_set.getString('PASS'))
+            self.server = result_set.getString('DSERV_NAME')
+            self.application = result_set.getString('APP')
+            self.database = result_set.getString('DB')
+            return self
+
         def connect(self):
             from com.essbase.api.session import IEssbase
             from com.hyperion.aif.util import RegistryUtil as aifUtil
@@ -266,6 +284,7 @@ class Core(object):
                 self.domain = self.essbase.signOn(self.username, self.password, False, None, "Embedded")
             self.connection = self.domain.getOlapServer(self.server)
             self.connection.connect()
+            return self
 
         def get_cube(self, application=None, database=None):
             if application is None:
@@ -279,6 +298,8 @@ class Core(object):
             raise ("Connection unavilable: Unable to access cube.")
 
         def get_variable(self, variable):
+            if not self.connection:
+                self.connect()
             if self.connection:
                 return self.connection.getSubstitutionVariableValue(variable)
             raise ("Connection unavilable: Unable to retreive variable.")
@@ -296,6 +317,18 @@ class Core(object):
         self.essbase = self._Essbase(self, settings=settings)
         self.sql = self._SQL(self, settings=settings)
         self.file = self._File(self, settings=settings)
+    def logoff(self):
+        if self.essbase.connection:
+            try:
+                self.essbase.sign_off()
+            finally:
+                self.essbase.connection = None
+        for connection in self.sql.connections:
+            try:
+                connection.connection.close()
+            finally:
+                connection.connection = None
+
     def cleanup(self):
         del self.essbase
         del self.sql
