@@ -308,6 +308,22 @@ class Core(object):
             if self.essbase:
                 self.essbase.signOff()
 
+    class Status(object):
+        def parse(self, value):
+            return int(value) % 10
+
+        @property
+        def none(self):
+            return 0
+
+        @property
+        def success(self):
+            return 1
+
+        @property
+        def fail(self):
+            return 2
+
     def __init__(self, context, api, settings=Settings()):
         self._context = context
         self._api = api
@@ -317,6 +333,8 @@ class Core(object):
         self.essbase = self._Essbase(self, settings=settings)
         self.sql = self._SQL(self, settings=settings)
         self.file = self._File(self, settings=settings)
+        self.status = self.Status()
+
     def logoff(self):
         if self.essbase.connection:
             try:
@@ -397,10 +415,6 @@ class Core(object):
         return self.get_context_value("EXPORTMODE")
 
     @property
-    def export_status(self):
-        return self.get_context_value("EXPSTATUS")
-
-    @property
     def file_directory(self):
         return self.get_context_value("FILEDIR")
 
@@ -426,7 +440,7 @@ class Core(object):
 
     @property
     def load_id(self):
-        return self.get_context_value("LOADID")
+        return int(self.get_context_value("LOADID"))
 
     @property
     def location_key(self):
@@ -489,5 +503,16 @@ class Core(object):
         return self.get_context_value("USERNAME")
 
     @property
+    def process_state(self):
+        import java.math.BigDecimal as bd
+        return self._api.getProcessStates(bd(self.load_id))
+
+    @property
+    def export_status(self):
+        self._api.logInfo("Process Status: %s\tExport Status:%s" % (str(self.process_state["PROCESSSTATUS"]), str(self.process_state["EXPSTATUS"])))
+        return self.status.parse(self.process_state["EXPSTATUS"])
+
+    @property
     def validation_status(self):
-        return self.get_context_value("VALSTATUS")
+        self._api.logInfo("Process Status: %s\tValidation Status:%s" % (str(self.process_state["PROCESSSTATUS"]), str(self.process_state["VALSTATUS"])))
+        return self.status.parse(self.process_state["PROCESSSTATUS"])
