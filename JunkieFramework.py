@@ -516,3 +516,17 @@ class Core(object):
     def validation_status(self):
         self._api.logInfo("Process Status: %s\tValidation Status:%s" % (str(self.process_state["PROCESSSTATUS"]), str(self.process_state["VALSTATUS"])))
         return self.status.parse(self.process_state["PROCESSSTATUS"])
+
+    @property
+    def log_file(self, refresh=False):
+        if not self._log_file or refresh:
+            query = "SELECT LOG_FILE from AIF_PROCESSES WHERE PROCESS_ID = ?"
+            result_set = self._api.executeQuery(query, [self.load_id])
+            result_set.next()
+            self._log_file = result_set.getString("LOG_FILE")
+        return self._log_file
+
+    @property
+    def log_file_name(self):
+        import os
+        return os.path.basename(self.log_file.rstrip("/").rstrip('\\'))
