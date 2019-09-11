@@ -308,6 +308,48 @@ class Core(object):
             if self.essbase:
                 self.essbase.signOff()
 
+    class _Batch(object):
+        def __init__(self, framework):
+            self.framework = framework
+            self.framework.append_path(self.fdmee_lib('aif-batch.jar'))
+            from com.hyperion.aif.util import BatchExecutor
+            self.batch = BatchExecutor()
+            self.username = None
+            self.password = None
+
+        def fdmee_lib(self, value):
+            import os
+            file = "%(home)s%(delim)sproducts%(delim)sFinancialDataQuality%(delim)slib%(delim)s%(value)s" % \
+                   {"home": self.framework.epm_home, "delim": os.path.sep, "value": value}
+            return file
+
+        @staticmethod
+        def true_false(value):
+            if value is True or value == "Y":
+                return "Y"
+            else:
+                return "N"
+
+        def loaddata(self, load_rule="", start_period="", end_period="", username=None, password=None,
+                     import_from_source=True, export_to_target=True, export_mode="STORE_DATA", import_mode="REPLACE",
+                     sync_mode=True, load_exchange_rate=False):
+            if not username:
+                username = self.username
+            if not password:
+                password = self.password
+            if sync_mode == False or sync_mode == "ASYNC":
+                sync_mode = "ASYNC"
+            else:
+                sync_mode = "SYNC"
+            if end_period == "":
+                end_period = start_period
+            command = ["loaddata", username, password, load_rule, self.true_false(import_from_source),
+                       self.true_false(export_to_target), export_mode, import_mode,
+                       self.true_false(load_exchange_rate), start_period, end_period, sync_mode]
+            for i in command:
+                self.framework._api.logInfo(i)
+            self.batch.main(command)
+
     class Status(object):
         def parse(self, value):
             return int(value) % 10
@@ -333,6 +375,8 @@ class Core(object):
         self.essbase = self._Essbase(self, settings=settings)
         self.sql = self._SQL(self, settings=settings)
         self.file = self._File(self, settings=settings)
+        self.batch = self._Batch(self)
+        self._log_file = None
         self.status = self.Status()
 
     def logoff(self):
@@ -348,6 +392,9 @@ class Core(object):
                 connection.connection = None
 
     def cleanup(self):
+        if self.batch.batch:
+            del self.batch.batch
+        del self.batch
         del self.essbase
         del self.sql
         del self.file
