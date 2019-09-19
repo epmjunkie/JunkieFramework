@@ -366,6 +366,10 @@ class Core(object):
         def fail(self):
             return 2
 
+        @property
+        def unknown(self):
+            return 3
+
     def __init__(self, context, api, settings=Settings()):
         self._context = context
         self._api = api
@@ -555,14 +559,74 @@ class Core(object):
         return self._api.getProcessStates(bd(self.load_id))
 
     @property
-    def export_status(self):
-        self._api.logInfo("Process Status: %s\tExport Status:%s" % (str(self.process_state["PROCESSSTATUS"]), str(self.process_state["EXPSTATUS"])))
-        return self.status.parse(self.process_state["EXPSTATUS"])
+    def import_status(self):
+        self._api.logInfo("Process Status: %s\tImport Status:%s" % (
+        str(self.process_state["PROCESSSTATUS"]), str(self.process_state["IMPSTATUS"])))
+        if self.process_state["IMPSTATUS"] == 1 or self.process_state["PROCESSSTATUS"] == 1:
+            return self.status.success
+        elif self.process_state["IMPSTATUS"] == 2 or self.process_state["PROCESSSTATUS"] == 2:
+            return self.status.fail
+        elif self.process_state["IMPSTATUS"] == 0 and self.process_state["PROCESSSTATUS"] == 0:
+            return self.status.none
+        self._api.logInfo("UNKNOWN Process Status: %s\tImport Status:%s" % (
+        str(self.process_state["PROCESSSTATUS"]), str(self.process_state["IMPSTATUS"])))
+        return self.status.unknown
 
     @property
     def validation_status(self):
-        self._api.logInfo("Process Status: %s\tValidation Status:%s" % (str(self.process_state["PROCESSSTATUS"]), str(self.process_state["VALSTATUS"])))
-        return self.status.parse(self.process_state["PROCESSSTATUS"])
+        self._api.logInfo("Process Status: %s\tValidation Status:%s" % (
+        str(self.process_state["PROCESSSTATUS"]), str(self.process_state["VALSTATUS"])))
+        if self.process_state["VALSTATUS"] == 1 or self.process_state["PROCESSSTATUS"] == 11:
+            return self.status.success
+        elif self.process_state["VALSTATUS"] == 2 or self.process_state["PROCESSSTATUS"] == 12:
+            return self.status.fail
+        elif self.process_state["VALSTATUS"] == 0 and self.process_state["PROCESSSTATUS"] <= 10:
+            return self.status.none
+        self._api.logInfo("UNKNOWN Process Status: %s\tValidation Status:%s" % (
+        str(self.process_state["PROCESSSTATUS"]), str(self.process_state["VALSTATUS"])))
+        return self.status.unknown
+
+    @property
+    def export_status(self):
+        self._api.logInfo("Process Status: %s\tExport Status:%s" % (
+        str(self.process_state["PROCESSSTATUS"]), str(self.process_state["EXPSTATUS"])))
+        if self.process_state["EXPSTATUS"] == 1 or self.process_state["PROCESSSTATUS"] == 21:
+            return self.status.success
+        elif self.process_state["EXPSTATUS"] == 2 or self.process_state["PROCESSSTATUS"] == 22:
+            return self.status.fail
+        elif self.process_state["EXPSTATUS"] == 0 and self.process_state["PROCESSSTATUS"] <= 20:
+            return self.status.none
+        self._api.logInfo("UNKNOWN Process Status: %s\tExport Status:%s" % (
+        str(self.process_state["PROCESSSTATUS"]), str(self.process_state["EXPSTATUS"])))
+        return self.status.unknown
+
+    @property
+    def load_status(self):
+        self._api.logInfo("Process Status: %s\tLoad Status:%s" % (
+        str(self.process_state["PROCESSSTATUS"]), str(self.process_state["PROCESSSTATUS"])))
+        if self.process_state["PROCESSSTATUS"] == 31:
+            return self.status.success
+        elif self.process_state["PROCESSSTATUS"] == 32:
+            return self.status.fail
+        elif self.process_state["PROCESSSTATUS"] <= 30:
+            return self.status.none
+        self._api.logInfo("UNKNOWN Process Status: %s\tLoad Status:%s" % (
+        str(self.process_state["PROCESSSTATUS"]), str(self.process_state["PROCESSSTATUS"])))
+        return self.status.unknown
+
+    @property
+    def check_status(self):
+        self._api.logInfo("Process Status: %s\tCheck Status:%s" % (
+        str(self.process_state["PROCESSSTATUS"]), str(self.process_state["CHKSTATUS"])))
+        if self.process_state["CHKSTATUS"] == 1 or self.process_state["PROCESSSTATUS"] == 41:
+            return self.status.success
+        elif self.process_state["CHKSTATUS"] == 2 or self.process_state["PROCESSSTATUS"] == 42:
+            return self.status.fail
+        elif self.process_state["CHKSTATUS"] == 0 and self.process_state["PROCESSSTATUS"] <= 40:
+            return self.status.none
+        self._api.logInfo("UNKNOWN Process Status: %s\tCheck Status:%s" % (
+        str(self.process_state["PROCESSSTATUS"]), str(self.process_state["CHKSTATUS"])))
+        return self.status.unknown
 
     @property
     def log_file(self, refresh=False):
