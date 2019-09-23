@@ -8,7 +8,8 @@ class Settings(object):
                  essbase_server=None,
                  essbase_application=None,
                  essbase_database=None,
-                 essbase_log=False):
+                 essbase_log=False,
+                 batch_command_line=True):
         self.email_sender = email_sender
         self.email_smtp_password = email_smtp_password
         self.email_smtp_host = email_smtp_host
@@ -23,6 +24,7 @@ class Settings(object):
         self.essbase_application = essbase_application
         self.essbase_database = essbase_database
         self.essbase_log = essbase_log
+        self.batch_command_line = batch_command_line
 
 
 class Core(object):
@@ -309,13 +311,14 @@ class Core(object):
                 self.essbase.signOff()
 
     class _Batch(object):
-        def __init__(self, framework):
+        def __init__(self, framework, settings):
             self.framework = framework
             self.framework.append_path(self.fdmee_lib('aif-batch.jar'))
             from com.hyperion.aif.util import BatchExecutor
             self.batch = BatchExecutor()
             self.username = None
             self.password = None
+            self.command_line = settings.batch_command_line
 
         def fdmee_lib(self, value):
             import os
@@ -329,6 +332,26 @@ class Core(object):
                 return "Y"
             else:
                 return "N"
+
+        def command(self, args):
+            import os
+            import subprocess
+            path = "%s/financialdataquality/" % self.framework.epm_instance_home.replace("\\", "/")
+            if args[0] == "loaddata":
+                command = "loaddata.bat"
+            if not args[2].startswith('-f:'):
+                args[2] = '-f:%s' % args[2]
+            if ' ' in args[3]:
+                args[3] = args[3].replace(' ', '+')
+            self.framework._api.logDebug('Running %s%s %s' % (path, command, ' '.join(args[1:])))
+            os.chdir(path)
+            result = subprocess.Popen('%s%s %s' % (path, command, ' '.join(args[1:])), stderr=subprocess.PIPE,
+                                      stdout=subprocess.PIPE)
+            stdout, stderr = result.communicate()
+            if stderr:
+                self.framework._api.logDebug(str(stderr))
+            else:
+                self.framework._api.logDebug(str(stdout))
 
         def loaddata(self, load_rule="", start_period="", end_period="", username=None, password=None,
                      import_from_source=True, export_to_target=True, export_mode="STORE_DATA", import_mode="REPLACE",
@@ -348,7 +371,10 @@ class Core(object):
                        self.true_false(load_exchange_rate), start_period, end_period, sync_mode]
             for i in command:
                 self.framework._api.logInfo(i)
-            self.batch.main(command)
+            if not self.command_line:
+                self.batch.main(command)
+            else:
+                self.command(command)
 
     class Status(object):
         def parse(self, value):
@@ -379,7 +405,7 @@ class Core(object):
         self.essbase = self._Essbase(self, settings=settings)
         self.sql = self._SQL(self, settings=settings)
         self.file = self._File(self, settings=settings)
-        self.batch = self._Batch(self)
+        self.batch = self._Batch(self, settings=settings)
         self._log_file = None
         self.status = self.Status()
 
