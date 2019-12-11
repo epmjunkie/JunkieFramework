@@ -317,6 +317,70 @@ class Core(object):
             if self.essbase:
                 self.essbase.signOff()
 
+    class Outline:
+        def __init__(self, framework, settings, essbase, application=None, database=None):
+            self.framework = framework
+            self.application = application
+            self.database = database
+            self.essbase = essbase
+            self.connection = None
+            if not application and essbase.application:
+                self.application = essbase.application
+            if not database and essbase.database:
+                self.database = essbase.database
+            if self.essbase.connection:
+                self.connection = self.essbase.connection
+            self.otl = None
+            self.haschanges = False
+
+        def open(self, application=None, database=None):
+            if application:
+                self.application = application
+            if database:
+                self.database = database
+            if not self.essbase.essbase:
+                self.connection = self.essbase.connect()
+            elif not self.connection:
+                self.connection = self.essbase.connection
+            app = self.connection.getApplication(self.application)
+            cube = app.getCube(self.database)
+            self.connection.setActive(self.application, self.database)
+            self.otl = cube.openOutline(False, True, True)
+
+        def close(self, save=False):
+            if save:
+                self.save()
+            self.otl.close()
+
+        def save(self, verify=False):
+            from com.essbase.api.datasource import IEssCube
+            if self.haschanges and verify:
+                self.otl.verify(True)
+            self.otl.save()
+            self.otl.restructureCube(IEssCube.EEssRestructureOption.KEEP_ALL_DATA)
+
+        def unlock(self):
+            from com.essbase.api.datasource import IEssOlapFileObject
+            app = self.connection.getApplication(self.application)
+            cube = app.getCube(self.database)
+            cube.unlockOlapFileObject(IEssOlapFileObject.TYPE_OUTLINE, "%(outline)s" % {"outline": self.database})
+
+        def xmlexport(self, filepath, dimensions=[], application=None, database=None):
+            from com.essbase.api.datasource import EssOtlExportOptions
+            if application:
+                self.application = application
+            if database:
+                self.database = database
+            options = EssOtlExportOptions()
+            if len(dimensions) > 0:
+                options.setDimList(dimensions)
+                options.setOutputFlag(1)
+            else:
+                options.setOutputFlag(0)
+            app = self.connection.getApplication(self.application)
+            cube = app.getCube(self.database)
+            cube.exportOutline(options, filepath)
+
     class _Batch(object):
         def __init__(self, framework, settings):
             self.framework = framework
@@ -416,6 +480,7 @@ class Core(object):
         self.email = self._Email(settings=settings)
         self.log = self._Log(context, api)
         self.essbase = self._Essbase(self, settings=settings)
+        self.outline = self.Outline(self, settings=settings, essbase=self.essbase)
         self.sql = self._SQL(self, settings=settings)
         self.file = self._File(self, settings=settings)
         self.batch = self._Batch(self, settings=settings)
