@@ -9,7 +9,8 @@ class Settings(object):
                  essbase_application=None,
                  essbase_database=None,
                  essbase_log=False,
-                 batch_command_line=True):
+                 batch_command_line=True,
+                 batch_encode_command=None):
         self.email_sender = email_sender
         self.email_smtp_password = email_smtp_password
         self.email_smtp_host = email_smtp_host
@@ -25,6 +26,12 @@ class Settings(object):
         self.essbase_database = essbase_database
         self.essbase_log = essbase_log
         self.batch_command_line = batch_command_line
+        if batch_encode_command:
+            self.batch_encode_command = batch_encode_command
+        elif batch_command_line:
+            self.batch_encode_command = True
+        else:
+            self.batch_encode_command = False
 
 
 class Core(object):
@@ -319,6 +326,7 @@ class Core(object):
             self.username = None
             self.password = None
             self.command_line = settings.batch_command_line
+            self.encode_command = settings.batch_encode_command
 
         def fdmee_lib(self, value):
             import os
@@ -332,6 +340,10 @@ class Core(object):
                 return "Y"
             else:
                 return "N"
+        
+        @staticmethod
+        def encode_value(val):
+            return val.replace('+', '%%2B').replace(' ', '+')
 
         def command(self, args):
             import os
@@ -345,17 +357,16 @@ class Core(object):
                 args[3] = args[3].replace(' ', '+')
             self.framework._api.logDebug('Running %s%s %s' % (path, command, ' '.join(args[1:])))
             os.chdir(path)
-            result = subprocess.Popen('%s%s %s' % (path, command, ' '.join(args[1:])), stderr=subprocess.PIPE,
-                                      stdout=subprocess.PIPE)
+            result = subprocess.Popen('%s%s %s' % (path, command, ' '.join(args[1:])), stderr=subprocess.PIPE, stdout=subprocess.PIPE)
             stdout, stderr = result.communicate()
             if stderr:
                 self.framework._api.logDebug(str(stderr))
             else:
                 self.framework._api.logDebug(str(stdout))
 
-        def loaddata(self, load_rule="", start_period="", end_period="", username=None, password=None,
-                     import_from_source=True, export_to_target=True, export_mode="STORE_DATA", import_mode="REPLACE",
-                     sync_mode=True, load_exchange_rate=False):
+        def loaddata(self, load_rule="", start_period="", end_period="", username=None, password=None, import_from_source=True, export_to_target=True, export_mode="STORE_DATA", import_mode="REPLACE", sync_mode=True, load_exchange_rate=False, encode_command=None):
+            if not encode_command:
+                encode_command = self.encode_command
             if not username:
                 username = self.username
             if not password:
@@ -366,6 +377,8 @@ class Core(object):
                 sync_mode = "SYNC"
             if end_period == "":
                 end_period = start_period
+            if self.command_line and encode_command:
+                load_rule = self.encode_value(load_rule)
             command = ["loaddata", username, password, load_rule, self.true_false(import_from_source),
                        self.true_false(export_to_target), export_mode, import_mode,
                        self.true_false(load_exchange_rate), start_period, end_period, sync_mode]
@@ -391,7 +404,7 @@ class Core(object):
         @property
         def fail(self):
             return 2
-
+        
         @property
         def unknown(self):
             return 3
